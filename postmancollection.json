@@ -1,0 +1,241 @@
+{
+	"info": {
+		"_postman_id": "a58c847b-1ab6-4256-951b-afc04e77e7dd",
+		"name": "User Management API",
+		"description": "API for user management operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37547391"
+	},
+	"item": [
+		{
+			"name": "Register a new user",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"exampleUser\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/users",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Log in a user",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/login",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Log out a user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/logout",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Retrieve all users",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/users",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update a user's role",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"role\": \"admin\"\n}"
+				},
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/users/role",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"users",
+						"role"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Block or unblock a user",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"isBlocked\": true\n}"
+				},
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/users/block",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"users",
+						"block"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Request a password reset",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\"\n}"
+				},
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/forgot-passcode",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"forgot-passcode"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reset user password",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"newPassword\": \"newPassword123\"\n}"
+				},
+				"url": {
+					"raw": "https://user-management-api-394t.onrender.com/api/reset-passcode/:token",
+					"protocol": "https",
+					"host": [
+						"user-management-api-394t",
+						"onrender",
+						"com"
+					],
+					"path": [
+						"api",
+						"reset-passcode",
+						":token"
+					],
+					"variable": [
+						{
+							"key": "token"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
