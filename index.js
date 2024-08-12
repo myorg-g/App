@@ -1,10 +1,11 @@
+// index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const userRoutes = require('./routes/userRoutes');
-const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
 
 const app = express();
@@ -36,7 +37,7 @@ const swaggerOptions = {
     info: {
       title: 'User Management API',
       version: '1.0.0',
-      description: 'API for user management including registration, login, logout, and role management',
+      description: 'API for user management including registration, login, logout, role management, and password reset',
     },
   },
   apis: ['./routes/userRoutes.js'],
@@ -48,6 +49,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Use user routes
 app.use('/api', userRoutes);
 
+
+console.log(process.env.SMTP_HOST);
+console.log(process.env.SMTP_PORT);
+console.log(process.env.SMTP_USER);
+console.log(process.env.SMTP_PASS); 
 // Start server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

@@ -1,6 +1,9 @@
+// routes/userRoutes.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/User');
+const { sendEmail } = require('../utils/emailUtil'); // Import the sendEmail function
 const router = express.Router();
 
 /**
@@ -107,6 +110,8 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
 
+    if (user.isBlocked) return res.status(403).json({ message: 'User is blocked' });
+
     req.session.userId = user._id;
     res.status(200).json({ message: 'Logged in successfully' });
   } catch (err) {
@@ -169,12 +174,166 @@ router.get('/users', async (req, res) => {
 
 /**
  * @swagger
- * /api/users/{id}/role:
+ * /api/users/role:
  *   patch:
  *     summary: Update a user's role
  *     tags: [Users]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [user, admin]
+ *             required:
+ *               - email
+ *               - role
+ *     responses:
+ *       200:
+ *         description: User role updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: User not found
+ *       400:
+ *         description: Invalid role
+ *       500:
+ *         description: Server error
+ */
+router.patch('/users/role', async (req, res) => {
+  const { email, role } = req.body;
+  if (!['user', 'admin'].includes(role)) {
+    return res.status(400).json({ message: 'Invalid role' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.role = role;
+    await user.save();
+    res.status(200).json({ message: 'User role updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/block:
+ *   patch:
+ *     summary: Block or unblock a user
+ *     tags: [Users]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               isBlocked:
+ *                 type: boolean
+ *             required:
+ *               - email
+ *               - isBlocked
+ *     responses:
+ *       200:
+ *         description: User block status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/users/block', async (req, res) => {
+  const { email, isBlocked } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'User not found' });
+
+    user.isBlocked = isBlocked;
+    await user.save();
+    res.status(200).json({ message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/forgot-passcode:
+ *   post:
+ *     summary: Request a password reset
+ *     tags: [Users]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Password reset email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/forgot-passcode', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'User not found' });
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const resetUrl = `${process.env.CLIENT_URL}/reset-passcode/${resetToken}`;
+    await sendEmail(email, 'Password Reset Request', `You can reset your password using the following link: ${resetUrl}`);
+    res.status(200).json({ message: 'Password reset email sent' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/reset-passcode/{token}:
+ *   patch:
+ *     summary: Reset user password
+ *     tags: [Users]
  *     parameters:
- *       - name: id
+ *       - name: token
  *         in: path
  *         required: true
  *         schema:
@@ -185,13 +344,13 @@ router.get('/users', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               role:
+ *               newPassword:
  *                 type: string
  *             required:
- *               - role
+ *               - newPassword
  *     responses:
  *       200:
- *         description: Role updated successfully
+ *         description: Password reset successful
  *         content:
  *           application/json:
  *             schema:
@@ -199,61 +358,23 @@ router.get('/users', async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found
+ *       400:
+ *         description: Invalid or expired token
  *       500:
  *         description: Server error
  */
-router.patch('/users/:id/role', async (req, res) => {
-  const { id } = req.params;
-  const { role } = req.body;
+router.patch('/reset-passcode/:token', async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
   try {
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findOne({ resetToken: token, resetTokenExpiry: { $gt: Date.now() } });
+    if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
 
-    user.role = role;
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
     await user.save();
-    res.status(200).json({ message: 'Role updated successfully', user });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/**
- * @swagger
- * /api/users/{id}:
- *   delete:
- *     summary: Delete a user
- *     tags: [Users]
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: User deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       404:
- *         description: User not found
- *       500:
- *         description: Server error
- */
-router.delete('/users/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const user = await User.findByIdAndDelete(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: 'Password reset successful' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
