@@ -13,11 +13,17 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-#final image 
+# Build your application if needed (e.g., if using a build tool)
+# RUN npm run build  # Uncomment if you have a build script
+
+# Final image
 FROM node:18-alpine
 
-#Copy
-COPY --from=build /usr/src/app
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder /usr/src/app /usr/src/app
 
 # Expose the port your app runs on
 EXPOSE 3000
