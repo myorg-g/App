@@ -319,7 +319,7 @@ router.post('/forgot-passcode', async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-passcode/${resetToken}`;
-    await sendEmail(email, 'Password Reset Request', `You can reset your password using the following resetToken: ${resetToken}`);
+    await sendEmail(email, 'Password Reset Request', `You can reset your password using the following link: ${resetUrl}`);
     res.status(200).json({ message: 'Password reset email sent' });
   } catch (err) {
     res.status(500).json({ message: err.message });

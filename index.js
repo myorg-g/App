@@ -39,6 +39,44 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API for user management including registration, login, logout, role management, and password reset',
     },
+    components: {
+      schemas: {
+        User: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              format: 'objectId',
+            },
+            username: {
+              type: 'string',
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+            },
+            password: {
+              type: 'string',
+            },
+            role: {
+              type: 'string',
+              enum: ['user', 'admin'],
+            },
+            isBlocked: {
+              type: 'boolean',
+            },
+            resetToken: {
+              type: 'string',
+            },
+            resetTokenExpiry: {
+              type: 'string',
+              format: 'date-time',
+            },
+          },
+          required: ['username', 'email', 'password'],
+        },
+      },
+    },
   },
   apis: ['./routes/userRoutes.js'],
 };
@@ -49,11 +87,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Use user routes
 app.use('/api', userRoutes);
 
-
-console.log(process.env.SMTP_HOST);
-console.log(process.env.SMTP_PORT);
-console.log(process.env.SMTP_USER);
-console.log(process.env.SMTP_PASS); 
 // Start server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
